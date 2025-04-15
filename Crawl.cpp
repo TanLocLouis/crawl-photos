@@ -1,37 +1,52 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <stdlib.h>
 
 using namespace std;
 
-void input(int& numPages, string& url) {
-    cout << "Link without page-n: ";
+const string findPattern = "<img src=\"https://voz.vn/attachment"; // pattern to dectect data
+
+void input(string& url, int& startPage, int& endPage) {
+    cout << "Link: ";
     cin >> url;
-    cout << "Number of pages: ";
-    cin >> numPages;
+    cout << "Start from page: ";
+    cin >> startPage;
+    cout << "To: ";
+    cin >> endPage;
 }
 
-void commit(string filename, int& count) {
-        fstream f1(filename);
+void trimUrl(string& url) {
+    size_t pos = url.find_last_of("/");
+    url = url.substr(0, pos + 1);
+    cout << "Debug" << endl;
+    cout << url << endl;
+}
 
-        string text, img_link;
-        string imgPattern = "<img src=\"https://voz.vn/attachment"; // pattern to dectect data
-        while (getline(f1, text)){ // get data current page
-            if (text.find(imgPattern) != string::npos) {
-                for (int i = 0; i < text.length() ; i++) {
-                    if (text[i] == '\"') {
-                        img_link = text.substr(i + 1, text.length() - i - 2); // get link of image
-                        string cmd = "curl -A \"Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\" -o Photo_" + std::to_string(count) + ".jpg \"" + img_link + "\"";
-                        system(cmd.c_str());
-                        count++;
-
-                        cout << endl;
-                        cout << "------------------------------------------------------------------" << endl;
-                        cout << img_link << endl; // show link of image
-                        cout << "------------------------------------------------------------------" << endl;
-                        cout << endl;
-
-                        break;
+void commit() {
+        fstream f1("VOZ.txt");
+    
+        string text = "";
+        string img = "";
+        while (getline(f1, text)){// get data current page
+	    int countQuote = 0;
+	    int start = 0;
+            if (text.find(findPattern) != string::npos) {
+                for (int i = 0; i < text.length(); i++) {
+                    if (text[i] == '"') {
+			countQuote++;
+			cout << countQuote << endl;
+			if (countQuote == 1) start = i;
+			if (countQuote == 2) {
+			        img = text.substr(start, i - start + 1);
+				cout << "Debug:";
+				cout << img << endl; cout << endl;
+			        system(("wget --user-agent=\"Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\" " + img + " -O Photo_" + to_string(rand()) + ".jpg").c_str()); // download data
+			        cout << img << endl; // show link of data
+			        cout << "------------------------------------------------------------------" << endl;
+			        cout << endl;
+				break;
+			}
                     }             
                 }
             }
@@ -39,22 +54,21 @@ void commit(string filename, int& count) {
         f1.close();
 }
 
-void get_data(int numPages, string url) {
-    int count = 0;
-    for (int eachPage = 1; eachPage <= numPages; eachPage++) {
-        cout << "------------------------------------------------------------------" << endl;
-        cout << "Downloading page " << eachPage << "..." << endl;
-        cout << "------------------------------------------------------------------" << endl;
-        string cmd = "curl.exe -A \"Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\" -o VOZ.txt " + url + "page-" + to_string(eachPage); // get data from current page
-        system(cmd.c_str()); // get images' link from current page
-        commit("VOZ.txt", count); // download images
-    }
+void get_data(const string& url, const int& startPage, const int& endPage) {
+        for (int each_page = startPage; each_page <= endPage; each_page++) { // get data each page
+            system(("wget -O VOZ.txt --user-agent=\"Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0\" " + url + "page-" + to_string(each_page)).c_str()); //download current page
+            commit();
+        }
 }
 
 int main() {
-    int numPages;
-    string url;
+    srand(time(0));
 
-    input(numPages, url);
-    get_data(numPages, url);
+    string url = "";
+    int startPage = 0;
+    int endPage = 0;
+    input(url, startPage, endPage);
+    trimUrl(url);
+
+    get_data(url, startPage, endPage);
 }
