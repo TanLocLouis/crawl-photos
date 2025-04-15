@@ -1,6 +1,10 @@
-Crawl photos.
+# Overview
+Crawl photos from Thread on VOZ.
 
-Your machine need installing ```wget``` to use it.
+# Installation
+- Your machine need installing ```wget``` to use it.
+- Compile using `g++` or any `C/C++` compiler.
 
-1. Add thread link with no page number.
-2. Choose how many pages you want to download.
+# Use
+1. Add thread link.
+2. Choose `start` and `end` page to download.
